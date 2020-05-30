@@ -1,0 +1,11 @@
+APPNAME = kingdom
+
+type = app
+profile = iot-headed-5.0
+
+USER_SRCS = src/kingdom.c
+USER_DEFS =
+USER_INC_DIRS = inc
+USER_OBJS =
+USER_LIBS =
+USER_EDCS =
