@@ -1,15 +1,15 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <peripheral_io.h>
-
-#include "log.h"
-#include "resource_internal.h"
+#include <dlog.h>
+#include "../resource_internal.h"
+#include "../voice_control_panel_main.h"
 
 void resource_close_led(int pin_num)
 {
 	if (!resource_get_info(pin_num)->opened) return;
 
-	_I("LED is finishing...");
+	LOGD("LED is finishing...");
 	peripheral_gpio_close(resource_get_info(pin_num)->sensor_h);
 	resource_get_info(pin_num)->opened = 0;
 }
@@ -32,7 +32,7 @@ int resource_write_led(int pin_num, int write_value)
 	ret = peripheral_gpio_write(resource_get_info(pin_num)->sensor_h, write_value);
 	retv_if(ret < 0, -1);
 
-	_I("LED Value : %s", write_value ? "ON":"OFF");
+	LOGD("LED Value : %s", write_value ? "ON":"OFF");
 
 	return 0;
 }

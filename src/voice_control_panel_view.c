@@ -1,5 +1,3 @@
-#include "view.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -9,17 +7,17 @@
 #include <dlog.h>
 #include <Elementary.h>
 
-#include "command.h"
-#include "main.h"
-#include "vc.h"
-#include "log.h"
+#include "voice_control_panel_command.h"
+#include "voice_control_panel_main.h"
+#include "voice_control_panel_view.h"
+#include "voice_control_panel_vc.h"
 
-#define PATH_LEN 1024
-#define MAIN_LAYOUT_EDJ		"edje/voice-control-panel.edj"
-#define MIC_IMAGE		"images/Voice_control_icon_mic.png"
-#define SETTING_IMAGE		"images/Voice_control_icon_setting.png"
-#define CLOSE_IMAGE		"images/Voice_control_icon_close.png"
-#define ARROW_IMAGE		"images/Voice_control_icon_arrow.png"
+#define MAIN_LAYOUT_EDJ		"/usr/apps/org.tizen.voice-control-panel/res/edje/voice-control-panel.edj"
+#define MIC_IMAGE		"/usr/apps/org.tizen.voice-control-panel/res/images/Voice_control_icon_mic.png"
+#define MUTE_IMAGE		"/usr/apps/org.tizen.voice-control-panel/res/images/Voice_control_icon_mute.png"
+#define SETTING_IMAGE		"/usr/apps/org.tizen.voice-control-panel/res/images/Voice_control_icon_setting.png"
+#define CLOSE_IMAGE		"/usr/apps/org.tizen.voice-control-panel/res/images/Voice_control_icon_close.png"
+#define ARROW_IMAGE		"/usr/apps/org.tizen.voice-control-panel/res/images/Voice_control_icon_arrow.png"
 
 static Elm_Genlist_Item_Class *g_itc = NULL;
 static Elm_Genlist_Item_Class *g_itc_chooser = NULL;
@@ -35,18 +33,18 @@ static char *__help_text_get(void *data, Evas_Object *obj, const char *part)
 	intptr_t pidx = (intptr_t)data;
 	int idx = (int)pidx;
 
-	_D("part : %s", part);
+	LOGD("part : %s", part);
 	if (!strcmp("elm.text", part)) {
 		if (1 == g_ad->current_depth) {
-			return strdup(g_command_1st[idx]);
+			return strdup(_(g_command_1st[idx]));
 		} else if (2 == g_ad->current_depth) {
-			return strdup(g_command_2nd[g_ad->current_path[0]][idx]);
+			return strdup(_(g_command_2nd[g_ad->current_path[0]][idx]));
 		}
 	} else if (!strcmp("elm.text.sub", part)) {
 		if (1 == g_ad->current_depth) {
-			return strdup(g_hint_1st[idx]);
+			return strdup(_(g_hint_1st[idx]));
 		} else if (2 == g_ad->current_depth) {
-			return strdup(g_hint_2nd[g_ad->current_path[0]][idx]);
+			return strdup(_(g_hint_2nd[g_ad->current_path[0]][idx]));
 		}
 	}
 	return NULL;
@@ -61,22 +59,21 @@ static char *__help_text_get_for_app(void *data, Evas_Object *obj, const char *p
 	char *cmd = (char *)data;
 
 	if (!strcmp("elm.text", part)) {
-		_D("cmd (%s)", cmd);
+		LOGD("cmd (%s)", cmd);
 		return strdup(cmd);
 	}
 	return NULL;
 }
 
-/* pid to appid */
 static char *__command_text_get(void *data, Evas_Object *obj, const char *part)
 {
-	_D("==== Command text get cb ====");
+	LOGD("==== Command text get cb ====");
 	intptr_t p_pid = (intptr_t)data;
 	int pid = (int)p_pid;
 	char *app_id = NULL;
 
 	if (0 != app_manager_get_app_id(pid, &app_id)) {
-		_E("[ERROR] fail to get app information of the pid");
+		LOGE("[ERROR] fail to get app information of the pid");
 		return NULL;
 	}
 
@@ -94,78 +91,78 @@ static char *__command_text_get(void *data, Evas_Object *obj, const char *part)
 
 static void __command_del(void *data, Evas_Object *obj)
 {
-	_D("==== Command item del ====");
+	LOGD("==== Command item del ====");
 }
 
-static void __setting_clicked_cb(void *data, Evas_Object *obj, void *event_info)
+static void __vc_panel_setting_clicked_cb(void *data, Evas_Object *obj, void *event_info)
 {
-	_D("==== Setting Clicked ====");
+	LOGD("==== Setting Clicked ====");
 
 	app_control_h app_control;
 
 	if (0 != app_control_create(&app_control)) {
-		_E("[ERROR] fail to create app control handle");
+		LOGE("[ERROR] fail to create app control handle");
 		return;
 	}
 	if (0 != app_control_set_app_id(app_control, "org.tizen.voice-setting")) {
-		_E("[ERROR] fail to set app id");
+		LOGE("[ERROR] fail to set app id");
 
 		if (0 != app_control_destroy(app_control)) {
-			_E("[ERROR] fail to destroy app control handle");
+			LOGE("[ERROR] fail to destroy app control handle");
 		}
 
 		return;
 	}
 	if (0 != app_control_add_extra_data(app_control, "show", "voice-control")) {
-		_E("[ERROR] fail to add extra data");
+		LOGE("[ERROR] fail to add extra data");
 
 		if (0 != app_control_destroy(app_control)) {
-			_E("[ERROR] fail to destroy app control handle");
+			LOGE("[ERROR] fail to destroy app control handle");
 		}
 
 		return;
 	}
 	if (0 != app_control_send_launch_request(app_control, NULL, NULL)) {
-		_E("[ERROR] fail to send request");
+		LOGE("[ERROR] fail to send request");
 
 		if (0 != app_control_destroy(app_control)) {
-			_E("[ERROR] fail to destroy app control handle");
+			LOGE("[ERROR] fail to destroy app control handle");
 		}
 
 		return;
 	}
 	if (0 != app_control_destroy(app_control)) {
-		_E("[ERROR] fail to destroy app control handle");
+		LOGE("[ERROR] fail to destroy app control handle");
 	}
 
 	ui_app_exit();
 
-	_D("====");
-	_D("");
+	LOGD("====");
+	LOGD("");
 }
 
-static void __close_clicked_cb(void *data, Evas_Object *obj, void *event_info)
+static void __vc_panel_close_clicked_cb(void *data, Evas_Object *obj, void *event_info)
 {
-	_D("==== Close Clicked ====");
+	LOGD("==== Close Clicked ====");
 
-	vc_finalize(data);
+	vc_panel_vc_finalize(data);
 
-	_D("====");
-	_D("");
+	LOGD("====");
+	LOGD("");
 }
 
-static void __mic_clicked_cb(void *data, Evas *e, Evas_Object *obj, void *event_info)
+static void __vc_panel_mic_clicked_cb(void *data, Evas *e, Evas_Object *obj, void *event_info)
 {
-	_D("==== Mic Clicked ====");
+	LOGD("==== Mic Clicked ====");
 
-	view_hide_help(data);
-	vc_activate(data);
+	vc_panel_view_hide_help(data);
+	vc_panel_vc_activate(data);
 
-	_D("====");
-	_D("");
+	LOGD("====");
+	LOGD("");
 }
 
-int view_add_app(int pid, int *count, void *data)
+int vc_panel_add_app(int pid, int *count, void *data)
 {
 	appdata *ad = (appdata *)data;
 	Elm_Object_Item *it = NULL;
@@ -179,23 +176,23 @@ int view_add_app(int pid, int *count, void *data)
 	return 0;
 }
 
-int view_show_app_list(void *data)
+int vc_panel_view_show_app_list(void *data)
 {
-	_D("==== Show help ====");
+	LOGD("==== Show help ====");
 
 	appdata *ad = (appdata *)data;
 
 	evas_object_show(ad->help_win);
 
-	_D("====");
-	_D(" ");
+	LOGD("====");
+	LOGD(" ");
 
 	return 0;
 }
 
-int view_show_help(void *data)
+int vc_panel_view_show_help(void *data)
 {
-	_D("==== Show help ====");
+	LOGD("==== Show help ====");
 
 	appdata *ad = (appdata *)data;
 
@@ -229,7 +226,7 @@ int view_show_help(void *data)
 		if (NULL != iter) {
 			char *cmd = iter->data;
 			if (NULL != cmd) {
-				_D("Add list - (%s)", cmd);
+				LOGD("Add list - (%s)", cmd);
 				char *tmp = strdup(cmd);
 				it = elm_genlist_item_append(ad->help_genlist, g_itc_for_app, (void *)tmp, NULL, ELM_GENLIST_ITEM_NONE, NULL, NULL);
 				elm_genlist_item_select_mode_set(it, ELM_OBJECT_SELECT_MODE_DISPLAY_ONLY);
@@ -239,15 +236,15 @@ int view_show_help(void *data)
 
 	evas_object_show(ad->help_win);
 
-	_D("====");
-	_D(" ");
+	LOGD("====");
+	LOGD(" ");
 
 	return 0;
 }
 
-int view_hide_help(void *data)
+int vc_panel_view_hide_help(void *data)
 {
-	_D("==== Hide help ====");
+	LOGD("==== Hide help ====");
 
 	appdata *ad = (appdata *)data;
 
@@ -256,9 +253,9 @@ int view_hide_help(void *data)
 	return 0;
 }
 
-int view_show_result(void *data, const char *result)
+int vc_panel_view_show_result(void *data, const char *result)
 {
-	_D("==== Show result ====");
+	LOGD("==== Show result ====");
 
 	appdata *ad = (appdata *)data;
 	double duration;
@@ -280,23 +277,23 @@ int view_show_result(void *data, const char *result)
 	elm_label_slide_duration_set(label, duration);
 	elm_object_text_set(label, text);
 	elm_box_pack_end(ad->content_box, label);
-	evas_object_event_callback_add(label, EVAS_CALLBACK_MOUSE_UP, __mic_clicked_cb, ad);
+	evas_object_event_callback_add(label, EVAS_CALLBACK_MOUSE_UP, __vc_panel_mic_clicked_cb, ad);
 	evas_object_show(label);
 	elm_label_slide_go(label);
 
-	if (strcmp("Processing...", result) && strcmp("Touch here to restart", result)) {
-		vc_deactivate(data, duration + 1);
+	if (strcmp(_("IDS_PROCESSING"), result) && strcmp(_("IDS_RESTART"), result)) {
+		vc_panel_vc_deactivate(data, duration + 1);
 	}
 
 	return 0;
 }
 
-int view_show(void *data)
+int vc_panel_view_show(void *data)
 {
-	_D("==== Show content ====");
+	LOGD("==== Show content ====");
 
 	appdata *ad = (appdata *)data;
-	_D("Current Depth = %d", ad->current_depth);
+	LOGD("Current Depth = %d", ad->current_depth);
 
 	Evas_Object *box = elm_box_add(ad->layout_main);
 	elm_box_padding_set(box, 0, 0);
@@ -311,7 +308,7 @@ int view_show(void *data)
 		evas_object_size_hint_weight_set(label, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
 		evas_object_size_hint_align_set(label, 0.0, 0.0);
 		char text1[256] = {'\0', };
-		snprintf(text1, 256, "<font=Tizen:style=Regular><font_size=30><color=#FFFFFFFF>%s</color></font_size></font>", "Listening...");
+		snprintf(text1, 256, "<font=Tizen:style=Regular><font_size=30><color=#FFFFFFFF>%s</color></font_size></font>", _("IDS_LISTENING"));
 		elm_object_text_set(label, text1);
 		elm_box_pack_end(box, label);
 		evas_object_show(label);
@@ -325,13 +322,7 @@ int view_show(void *data)
 		evas_object_show(label1);
 
 		Evas_Object *image_arrow = elm_image_add(box);
-		char *resource_path = NULL;
-		char arrow_image[PATH_LEN] = {0, };
-		resource_path = app_get_resource_path();
-		snprintf(arrow_image, PATH_LEN, "%s%s", resource_path, ARROW_IMAGE);
-		free(resource_path);
-
-		elm_image_file_set(image_arrow, arrow_image, NULL);
+		elm_image_file_set(image_arrow, ARROW_IMAGE, NULL);
 		evas_object_size_hint_min_set(image_arrow, image_size, image_size);
 		elm_box_pack_end(box, image_arrow);
 		evas_object_show(image_arrow);
@@ -339,7 +330,7 @@ int view_show(void *data)
 		Evas_Object *label2 = elm_label_add(box);
 		evas_object_size_hint_align_set(label2, 0.0, 0.5);
 		char text2[256] = {'\0', };
-		snprintf(text2, 256, "<font=Tizen:style=Regular><font_size=30><color=#FFFFFFFF>%s</color><font_size></font>", "Listening...");
+		snprintf(text2, 256, "<font=Tizen:style=Regular><font_size=30><color=#FFFFFFFF>%s</color><font_size></font>", _("IDS_LISTENING"));
 		elm_object_text_set(label2, text2);
 		elm_box_pack_end(box, label2);
 		evas_object_show(label2);
@@ -354,54 +345,40 @@ int view_show(void *data)
 	return 0;
 }
 
-int view_hide(void *data)
+int vc_panel_view_hide(void *data)
 {
 	appdata *ad = (appdata *)data;
 
 	evas_object_hide(ad->win);
 
-	view_hide_help(ad);
+	vc_panel_view_hide_help(ad);
 
 	return 0;
 }
 
-int view_create(void *data)
+int vc_panel_view_create(void *data)
 {
-	_D("==== Create View ====");
+	LOGD("==== Create View ====");
 
 	appdata *ad = (appdata *)data;
 	g_ad = ad;
-	char *resource_path = NULL;
-	char main_layout_edj[PATH_LEN] = {0, };
-	char mic_image[PATH_LEN] = {0, };
-	char setting_image[PATH_LEN] = {0, };
-	char close_image[PATH_LEN] = {0, };
-	char arrow_image[PATH_LEN] = {0, };
 
-	resource_path = app_get_resource_path();
-	snprintf(main_layout_edj, PATH_LEN, "%s%s", resource_path, MAIN_LAYOUT_EDJ);
-	snprintf(mic_image, PATH_LEN, "%s%s", resource_path, MIC_IMAGE);
-	snprintf(setting_image, PATH_LEN, "%s%s", resource_path, SETTING_IMAGE);
-	snprintf(close_image, PATH_LEN, "%s%s", resource_path, CLOSE_IMAGE);
-	snprintf(arrow_image, PATH_LEN, "%s%s", resource_path, ARROW_IMAGE);
-	free(resource_path);
-
-	elm_theme_extension_add(NULL, main_layout_edj);
+	elm_theme_extension_add(NULL, MAIN_LAYOUT_EDJ);
 
 	/* Window */
 	Evas_Object *win = elm_win_add(NULL, "voice-control-panel", ELM_WIN_NOTIFICATION);
 	int x, y, w, h;
 	elm_win_screen_size_get(win, &x, &y, &w, &h);
-	_D("Size x(%d), y(%d), w(%d), h(%d)", x, y, w, h);
+	LOGD("Size x(%d), y(%d), w(%d), h(%d)", x, y, w, h);
 	elm_win_autodel_set(win, EINA_TRUE);
 	elm_win_title_set(win, "voice-control-panel");
 	elm_win_borderless_set(win, EINA_TRUE);
 	elm_win_alpha_set(win, EINA_TRUE);
 
-	ad->scale_w = w / 720.0;
-	ad->scale_h = h / 1280.0;
+	ad->scale_w = w / 1280.0;
+	ad->scale_h = h / 720.0;
 
-	int scaled_h = 80 * ad->scale_h;
+	int scaled_h = 90 * ad->scale_h;
 
 	elm_win_aux_hint_add(win, "wm.policy.win.user.geometry", "1");
 	elm_win_prop_focus_skip_set(win, EINA_TRUE);
@@ -414,7 +391,7 @@ int view_create(void *data)
 
 	/* Layout Main */
 	Evas_Object *layout = elm_layout_add(win);
-	elm_layout_file_set(layout, main_layout_edj, "main");
+	elm_layout_file_set(layout, MAIN_LAYOUT_EDJ, "main");
 	elm_win_resize_object_add(win, layout);
 	evas_object_size_hint_weight_set(layout, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
 	evas_object_show(layout);
@@ -422,32 +399,32 @@ int view_create(void *data)
 
 	/* Image MIC */
 	Evas_Object *image_mic = elm_image_add(layout);
-	elm_image_file_set(image_mic, mic_image, NULL);
+	elm_image_file_set(image_mic, MIC_IMAGE, NULL);
 	elm_object_part_content_set(layout, "icon1", image_mic);
-	evas_object_event_callback_add(image_mic, EVAS_CALLBACK_MOUSE_UP, __mic_clicked_cb, ad);
+	evas_object_event_callback_add(image_mic, EVAS_CALLBACK_MOUSE_UP, __vc_panel_mic_clicked_cb, ad);
 	evas_object_show(image_mic);
 	ad->image_mic = image_mic;
 
 	/* Image arrow */
 	Evas_Object *image_arrow = elm_image_add(layout);
-	elm_image_file_set(image_arrow, arrow_image, NULL);
+	elm_image_file_set(image_arrow, ARROW_IMAGE, NULL);
 	elm_object_part_content_set(layout, "icon2", image_arrow);
 	evas_object_show(image_arrow);
 	ad->image_arrow = image_arrow;
 
 	/* Image Setting */
 	Evas_Object *image_setting = elm_image_add(layout);
-	elm_image_file_set(image_setting, setting_image, NULL);
+	elm_image_file_set(image_setting, SETTING_IMAGE, NULL);
 	elm_object_part_content_set(layout, "icon3", image_setting);
-	evas_object_smart_callback_add(image_setting, "clicked", __setting_clicked_cb, ad);
+	evas_object_smart_callback_add(image_setting, "clicked", __vc_panel_setting_clicked_cb, ad);
 	evas_object_show(image_setting);
 	ad->image_setting = image_setting;
 
 	/* Image Close */
 	Evas_Object *image_close = elm_image_add(layout);
-	elm_image_file_set(image_close, close_image, NULL);
+	elm_image_file_set(image_close, CLOSE_IMAGE, NULL);
 	elm_object_part_content_set(layout, "icon4", image_close);
-	evas_object_smart_callback_add(image_close, "clicked", __close_clicked_cb, ad);
+	evas_object_smart_callback_add(image_close, "clicked", __vc_panel_close_clicked_cb, ad);
 	evas_object_show(image_close);
 	ad->image_close = image_close;
 
@@ -463,12 +440,12 @@ int view_create(void *data)
 	elm_win_prop_focus_skip_set(help_win, EINA_TRUE);
 
 	evas_object_resize(help_win, w, h / 2);
-	evas_object_move(help_win, 0, h - (h / 2) - (80 * ad->scale_h));
+	evas_object_move(help_win, 0, h - (h / 2) - (90 * ad->scale_h));
 
 	ad->help_win = help_win;
 
 	Evas_Object *help_layout = elm_layout_add(help_win);
-	elm_layout_file_set(help_layout, main_layout_edj, "help");
+	elm_layout_file_set(help_layout, "/usr/apps/org.tizen.voice-control-panel/res/edje/voice-control-panel.edj", "help");
 	elm_win_resize_object_add(help_win, help_layout);
 	evas_object_size_hint_weight_set(help_layout, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
 	evas_object_show(help_layout);
@@ -483,7 +460,7 @@ int view_create(void *data)
 
 	g_itc = elm_genlist_item_class_new();
 	if (NULL == g_itc) {
-		_E("Fail to new item class");
+		LOGE("Fail to new item class");
 		return -1;
 	}
 	g_itc->item_style = "type1";
@@ -494,7 +471,7 @@ int view_create(void *data)
 
 	g_itc_for_app = elm_genlist_item_class_new();
 	if (NULL == g_itc_for_app) {
-		_E("Fail to new item class");
+		LOGE("Fail to new item class");
 		return -1;
 	}
 	g_itc_for_app->item_style = "type1";
@@ -505,7 +482,7 @@ int view_create(void *data)
 
 	g_itc_chooser = elm_genlist_item_class_new();
 	if (NULL == g_itc_chooser) {
-		_E("[ERROR] Fail to create new item class");
+		LOGE("[ERROR] Fail to create new item class");
 		return -1;
 	}
 
@@ -515,15 +492,15 @@ int view_create(void *data)
 	g_itc_chooser->func.state_get = NULL;
 	g_itc_chooser->func.del = __command_del;
 
-	_D("====");
-	_D(" ");
+	LOGD("====");
+	LOGD(" ");
 
 	return 0;
 }
 
-void view_destroy(void *data)
+void vc_panel_view_destroy(void *data)
 {
-	_D("");
+	LOGD("");
 	if (NULL != g_itc) {
 		elm_genlist_item_class_free(g_itc);
 		g_itc = NULL;
@@ -541,3 +518,7 @@ void view_destroy(void *data)
 
 	return;
 }
+
+/*
+vi:ts=4:ai:nowrap:expandtab
+*/

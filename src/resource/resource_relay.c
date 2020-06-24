@@ -1,15 +1,15 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <peripheral_io.h>
-
-#include "log.h"
-#include "resource_internal.h"
+#include <dlog.h>
+#include "../resource_internal.h"
+#include "../voice_control_panel_main.h"
 
 void resource_close_relay(int pin_num)
 {
 	if (!resource_get_info(pin_num)->opened) return;
 
-	_I("Relay is finishing...");
+	LOGD("Relay is finishing...");
 	peripheral_gpio_close(resource_get_info(pin_num)->sensor_h);
 	resource_get_info(pin_num)->opened = 0;
 }
@@ -33,7 +33,7 @@ int resource_write_relay(int pin_num, int write_value)
 	retv_if(ret < 0, -1);
 
 #ifdef DEBUG
-	_I("Relay Value : %s", write_value ? "ON":"OFF");
+	LOGD("Relay Value : %s", write_value ? "ON":"OFF");
 #endif
 
 	return 0;

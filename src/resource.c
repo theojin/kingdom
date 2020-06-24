@@ -1,6 +1,5 @@
 #include <peripheral_io.h>
-
-#include "log.h"
+#include <dlog.h>
 #include "resource.h"
 
 static resource_s resource_info[PIN_MAX] = { {0, NULL, NULL}, };
@@ -15,7 +14,7 @@ void resource_close_all(void)
 	int i = 0;
 	for (i = 0; i < PIN_MAX; i++) {
 		if (!resource_info[i].opened) continue;
-		_I("GPIO[%d] is closing...", i);
+		LOGD("GPIO[%d] is closing...", i);
 
 		if (resource_info[i].close)
 			resource_info[i].close(i);
