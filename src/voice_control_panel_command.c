@@ -87,10 +87,17 @@ int vcp_cmd_set(int type, int cmd)
 {
 	switch (type) {
 		case FRONT_DOOR:
+			if (current_information.front_door == cmd) {
+				if (cmd) vc_panel_vc_play_text("정문은 이미 열려있습니다.");
+				else vc_panel_vc_play_text("정문은 이미 잠겨있습니다.");
+				break;
+			}
+			current_information.front_door = cmd;
+
 			if (resource_write_led(GPIO_FRONT, cmd)) {
 				LOGE("Cannot set FRONT as [%d]", cmd);
 			}
-			current_information.front_door = cmd;
+
 			if (current_information.timer[0]) {
 				ecore_timer_del(current_information.timer[0]);
 				current_information.timer[0] = NULL;
@@ -103,10 +110,17 @@ int vcp_cmd_set(int type, int cmd)
 			}
 			break;
 		case BACK_DOOR:
+			if (current_information.back_door == cmd) {
+				if (cmd) vc_panel_vc_play_text("남문은 이미 열려있습니다.");
+				else vc_panel_vc_play_text("남문은 이미 잠겨있습니다.");
+				break;
+			}
+			current_information.back_door = cmd;
+
 			if (resource_write_led(GPIO_BACK, cmd)) {
 				LOGE("Cannot set BACK as [%d]", cmd);
 			}
-			current_information.back_door = cmd;
+
 			if (current_information.timer[1]) {
 				ecore_timer_del(current_information.timer[1]);
 				current_information.timer[1] = NULL;
@@ -119,10 +133,17 @@ int vcp_cmd_set(int type, int cmd)
 			}
 			break;
 		case SWITCH_A:
+			if (current_information.switch_a == cmd) {
+				if (cmd) vc_panel_vc_play_text("일번기기는 이미 동작하고 있습니다.");
+				else vc_panel_vc_play_text("일번기기는 이미 중지된 상태입니다.");
+				break;
+			}
+			current_information.switch_a = cmd;
+
 			if (resource_write_relay(GPIO_SWITCH_A, cmd)) {
 				LOGE("Cannot set SWITCH A as [%d]", cmd);
 			}
-			current_information.switch_a = cmd;
+
 			if (current_information.timer[2]) {
 				ecore_timer_del(current_information.timer[2]);
 				current_information.timer[2] = NULL;
@@ -135,10 +156,17 @@ int vcp_cmd_set(int type, int cmd)
 			}
 			break;
 		case SWITCH_B:
+			if (current_information.switch_b == cmd) {
+				if (cmd) vc_panel_vc_play_text("이번기기는 이미 동작하고 있습니다.");
+				else vc_panel_vc_play_text("이번기기는 이미 중지된 상태입니다.");
+				break;
+			}
+			current_information.switch_b = cmd;
+
 			if (resource_write_relay(GPIO_SWITCH_B, cmd)) {
 				LOGE("Cannot set SWITCH B as [%d]", cmd);
 			}
-			current_information.switch_b = cmd;
+
 			if (current_information.timer[3]) {
 				ecore_timer_del(current_information.timer[3]);
 				current_information.timer[3] = NULL;
@@ -195,57 +223,72 @@ Eina_Bool _switch_b_timer_cb(void *data)
 
 int vcp_cmd_reserve(int type, int cmd, double seconds)
 {
-		switch (type) {
+	int is_reserved = 0;
+	char tts_str[1024] = {0, };
+
+	switch (type) {
 		case FRONT_DOOR:
 			if (current_information.timer[0]) {
 				ecore_timer_del(current_information.timer[0]);
+				is_reserved = 1;
 			}
 			current_information.timer[0] = ecore_timer_add(seconds, _front_timer_cb, (void *) cmd);
 			if (!current_information.timer[0]) LOGE("Timer error");
 
 			if (cmd == 1) {
-				vc_panel_vc_play_text("정문 열림 알람이 설정되었습니다.");
+				if (is_reserved) vc_panel_vc_play_text("기존 알람을 해제하고 정문 열림 알람을 설정하였습니다.");
+				else vc_panel_vc_play_text("정문 열림 알람을 설정하였습니다.");
 			} else {
-				vc_panel_vc_play_text("정문 잠금 알람이 설정되었습니다.");
+				if (is_reserved) vc_panel_vc_play_text("기존 알람을 해제하고 정문 잠금 알람을 설정하였습니다.");
+				else vc_panel_vc_play_text("정문 잠금 알람이 설정되었습니다.");
 			}
 			break;
 		case BACK_DOOR:
 			if (current_information.timer[1]) {
 				ecore_timer_del(current_information.timer[1]);
+				is_reserved = 1;
 			}
 			current_information.timer[1] = ecore_timer_add(seconds, _back_timer_cb, (void *) cmd);
 			if (!current_information.timer[1]) LOGE("Timer error");
 
 			if (cmd == 1) {
-				vc_panel_vc_play_text("남문 열림 알람이 설정되었습니다.");
+				if (is_reserved) vc_panel_vc_play_text("기존 알람을 해제하고 남문 열림 알람을 설정하였습니다.");
+				else vc_panel_vc_play_text("남문 열림 알람을 설정하였습니다.");
 			} else {
-				vc_panel_vc_play_text("남문 잠금 알람이 설정되었습니다.");
+				if (is_reserved) vc_panel_vc_play_text("기존 알람을 해제하고 남문 잠금 알람을 설정하였습니다.");
+				else vc_panel_vc_play_text("남문 잠금 알람을 설정하였습니다.");
 			}
 			break;
 		case SWITCH_A:
 			if (current_information.timer[2]) {
 				ecore_timer_del(current_information.timer[2]);
+				is_reserved = 1;
 			}
 			current_information.timer[2] = ecore_timer_add(seconds, _switch_a_timer_cb, (void *) cmd);
 			if (!current_information.timer[2]) LOGE("Timer error");
 
 			if (cmd == 1) {
-				vc_panel_vc_play_text("일번 기기 시작 알람이 설정되었습니다.");
+				if (is_reserved) vc_panel_vc_play_text("기존 알람을 해제하고 일번 기기 시작 알람을 설정하였습니다.");
+				else vc_panel_vc_play_text("일번 기기 시작 알람을 설정하였습니다.");
 			} else {
-				vc_panel_vc_play_text("일번 기기 중지 알람이 설정되었습니다.");
+				if (is_reserved) vc_panel_vc_play_text("기존 알람을 해제하고 일번 기기 중지 알람을 설정하였습니다.");
+				else vc_panel_vc_play_text("일번 기기 중지 알람을 설정하였습니다.");
 			}
 			break;
 		case SWITCH_B:
 			if (current_information.timer[3]) {
 				ecore_timer_del(current_information.timer[3]);
+				is_reserved = 1;
 			}
 			current_information.timer[3] = ecore_timer_add(seconds, _switch_b_timer_cb, (void *) cmd);
 			if (!current_information.timer[3]) LOGE("Timer error");
 
 			if (cmd == 1) {
-				vc_panel_vc_play_text("이번 기기 시작 알람이 설정되었습니다.");
+				if (is_reserved) vc_panel_vc_play_text("기존 알람을 해제하고 이번 기기 시작 알람을 설정하였습니다.");
+				else vc_panel_vc_play_text("이번 기기 시작 알람을 설정하였습니다.");
 			} else {
-				vc_panel_vc_play_text("이번 기기 중지 알람이 설정되었습니다.");
+				if (is_reserved) vc_panel_vc_play_text("기존 알람을 해제하고 이번 기기 중지 알람을 설정하였습니다.");
+				else vc_panel_vc_play_text("이번 기기 중지 알람을 설정하였습니다.");
 			}
 			break;
 		default:
@@ -262,6 +305,9 @@ int vcp_cmd_cancel(int type)
 			if (current_information.timer[0]) {
 				ecore_timer_del(current_information.timer[0]);
 				current_information.timer[0] = NULL;
+			} else {
+				vc_panel_vc_play_text("설정된 알람이 없습니다.");
+				break;
 			}
 
 			vc_panel_vc_play_text("정문 알람이 해제되었습니다.");
@@ -270,6 +316,9 @@ int vcp_cmd_cancel(int type)
 			if (current_information.timer[1]) {
 				ecore_timer_del(current_information.timer[1]);
 				current_information.timer[1] = NULL;
+			} else {
+				vc_panel_vc_play_text("설정된 알람이 없습니다.");
+				break;
 			}
 
 			vc_panel_vc_play_text("남문 알람이 해제되었습니다.");
@@ -278,6 +327,9 @@ int vcp_cmd_cancel(int type)
 			if (current_information.timer[2]) {
 				ecore_timer_del(current_information.timer[2]);
 				current_information.timer[2] = NULL;
+			} else {
+				vc_panel_vc_play_text("설정된 알람이 없습니다.");
+				break;
 			}
 
 			vc_panel_vc_play_text("일번 기기 알람이 해제되었습니다.");
@@ -286,6 +338,9 @@ int vcp_cmd_cancel(int type)
 			if (current_information.timer[3]) {
 				ecore_timer_del(current_information.timer[3]);
 				current_information.timer[3] = NULL;
+			} else {
+				vc_panel_vc_play_text("설정된 알람이 없습니다.");
+				break;
 			}
 
 			vc_panel_vc_play_text("이번 기기 알람이 해제되었습니다.");

@@ -179,250 +179,263 @@ bool vc_panel_action(const char* result, void *data)
 	appdata *ad = (appdata *)data;
 
 	if (1 == ad->current_depth) {
-		if (0 == strstr(result, "정") - result) {
-			LOGD("Enter : 정문");
+		do {
+			if ((0 == strstr(result, "정") - result)
+			|| (0 == strstr(result, "창") - result)) {
+				LOGD("Enter : 정문");
 
-			if (strstr(result, "뒤")) { // 예약
-				LOGD("Enter : 정문 -> 예약");
+				if (strstr(result, "뒤")) { // 예약
+					LOGD("Enter : 정문 -> 예약");
 
-				double sec = 0.0f;
-				if (strstr(result, "오")) {
-					LOGD("Enter : 정문 -> 예약 -> 오초");
-					sec = 5.0f;
-				} else {
-					LOGD("Enter : 정문 -> 예약 -> 십초");
-					sec = 10.0f;
-				}
+					if (!strstr(result, "초")) {
+						vc_panel_vc_play_text("단위를 확인할 수가 없습니다.");
+						break;
+					}
 
-				/* 최종 판단 코드 */
-				if (strstr(result, "열")) {
-					LOGD("Enter : 정문 -> 예약 -> 열어");
-					vcp_cmd_reserve(FRONT_DOOR, 1, sec); // 잠금 -> 열림
-				} else if (strstr(result, "잠")) {
-					LOGD("Enter : 정문 -> 예약 -> 잠궈");
-					vcp_cmd_reserve(FRONT_DOOR, 0, sec); // 열림 -> 잠금
-				} else {
-					if (current_information.front_door) {
-						LOGD("Enter : 정문 -> 예약 -> 잠궈?");
+					double sec = 0.0f;
+					if (strstr(result, "오")) {
+						LOGD("Enter : 정문 -> 예약 -> 오초");
+						sec = 5.0f;
+					} else if (strstr(result, "십") || strstr(result, "시") || strstr(result, "식") || strstr(result, "수")) {
+						LOGD("Enter : 정문 -> 예약 -> 십초");
+						sec = 15.0f;
+					} else {
+						vc_panel_vc_play_text("이해할 수 없는 숫자입니다.");
+						break;
+					}
+
+					/* 최종 판단 코드 */
+					if (strstr(result, "열")) {
+						LOGD("Enter : 정문 -> 예약 -> 열어");
+
+						vcp_cmd_reserve(FRONT_DOOR, 1, sec); // 잠금 -> 열림
+					} else if (strstr(result, "잠")) {
+						LOGD("Enter : 정문 -> 예약 -> 잠궈");
 						vcp_cmd_reserve(FRONT_DOOR, 0, sec); // 열림 -> 잠금
 					} else {
-						LOGD("Enter : 정문 -> 예약 -> 열어?");
-						vcp_cmd_reserve(FRONT_DOOR, 1, sec); // 잠금 -> 열림
+						vc_panel_vc_play_text("명령을 이해하지 못했습니다.");
 					}
-				}
-				return true;
-			} else if (strstr(result, "해")) { // 예약해제
-				LOGD("Enter : 정문 -> 예약해제");
+					return true;
+				} else if (strstr(result, "취")) { // 예약해제
+					LOGD("Enter : 정문 -> 예약해제");
 
-				/* 최종 판단 코드 */
-				LOGD("SUCCESS : %s", _("IDS_CANCEL_FRONTOPEN"));
-				vcp_cmd_cancel(FRONT_DOOR);
-				return true;
-			} else { // 일반
-				LOGD("Enter : 정문 -> 일반");
+					/* 최종 판단 코드 */
+					LOGD("SUCCESS : %s", _("IDS_CANCEL_FRONTOPEN"));
+					vcp_cmd_cancel(FRONT_DOOR);
+					return true;
+				} else { // 일반
+					LOGD("Enter : 정문 -> 일반");
+					LOGD("String length : %s(%d)", result, strlen(result));
+					if (strlen(result) >= 15) {
+						vc_panel_vc_play_text("명령을 이해하지 못했습니다.");
+						return true;
+					}
 
-				/* 최종 판단 코드 */
-				if (strstr(result, "열")) {
-					LOGD("Enter : 정문 -> 열어");
-					vcp_cmd_set(FRONT_DOOR, 1); // 잠금 -> 열림
-				} else if (strstr(result, "잠")) {
-					LOGD("Enter : 정문 -> 잠궈");
-					vcp_cmd_set(FRONT_DOOR, 0); // 열림 -> 잠금
-				} else {
-					if (current_information.front_door) {
-						LOGD("Enter : 정문 -> 잠궈?");
+					/* 최종 판단 코드 */
+					if (strstr(result, "열")) {
+						LOGD("Enter : 정문 -> 열어");
+						vcp_cmd_set(FRONT_DOOR, 1); // 잠금 -> 열림
+					} else if (strstr(result, "잠")) {
+						LOGD("Enter : 정문 -> 잠궈");
 						vcp_cmd_set(FRONT_DOOR, 0); // 열림 -> 잠금
 					} else {
-						LOGD("Enter : 정문 -> 열어?");
-						vcp_cmd_set(FRONT_DOOR, 1); // 잠금 -> 열림
+						vc_panel_vc_play_text("명령을 이해하지 못했습니다.");
 					}
+					return true;
 				}
-				return true;
-			}
-		} else if ((0 == strstr(result, "남") - result)
-		|| (0 == strstr(result, "낭") - result)) {
-			LOGD("Enter : 남문");
+			} else if ((0 == strstr(result, "남") - result)
+			|| (0 == strstr(result, "낭") - result)
+			|| (0 == strstr(result, "날") - result)
+			|| (0 == strstr(result, "멜론") - result)) {
+				LOGD("Enter : 남문");
 
-			if (strstr(result, "뒤")) { // 예약
-				LOGD("Enter : 남문 -> 예약");
+				if (strstr(result, "뒤")) { // 예약
+					LOGD("Enter : 남문 -> 예약");
 
-				double sec = 0.0f;
-				if (strstr(result, "오")) {
-					LOGD("Enter : 남문 -> 예약 -> 오초");
-					sec = 5.0f;
-				} else {
-					LOGD("Enter : 남문 -> 예약 -> 십초");
-					sec = 10.0f;
-				}
+					if (!strstr(result, "초")) {
+						vc_panel_vc_play_text("단위를 확인할 수가 없습니다.");
+						break;
+					}
 
-				/* 최종 판단 코드 */
-				if (strstr(result, "열")) {
-					LOGD("Enter : 남문 -> 예약 -> 열어");
-					vcp_cmd_reserve(BACK_DOOR, 1, sec); // 잠금 -> 열림
-				} else if (strstr(result, "잠")) {
-					LOGD("Enter : 남문 -> 예약 -> 잠궈");
-					vcp_cmd_reserve(BACK_DOOR, 0, sec); // 열림 -> 잠금
-				} else {
-					if (current_information.back_door) {
-						LOGD("Enter : 남문 -> 예약 -> 잠궈?");
+					double sec = 0.0f;
+					if (strstr(result, "오")) {
+						LOGD("Enter : 남문 -> 예약 -> 오초");
+						sec = 5.0f;
+					} else if (strstr(result, "십") || strstr(result, "시") || strstr(result, "식") || strstr(result, "수")) {
+						LOGD("Enter : 남문 -> 예약 -> 십초");
+						sec = 15.0f;
+					} else {
+						vc_panel_vc_play_text("이해할 수 없는 숫자입니다.");
+						break;
+					}
+
+					/* 최종 판단 코드 */
+					if (strstr(result, "열")) {
+						LOGD("Enter : 남문 -> 예약 -> 열어");
+						vcp_cmd_reserve(BACK_DOOR, 1, sec); // 잠금 -> 열림
+					} else if (strstr(result, "잠")) {
+						LOGD("Enter : 남문 -> 예약 -> 잠궈");
 						vcp_cmd_reserve(BACK_DOOR, 0, sec); // 열림 -> 잠금
 					} else {
-						LOGD("Enter : 남문 -> 예약 -> 열어?");
-						vcp_cmd_reserve(BACK_DOOR, 1, sec); // 잠금 -> 열림
+						vc_panel_vc_play_text("명령을 이해하지 못했습니다.");
 					}
-				}
-				return true;
-			} else if (strstr(result, "해")) { // 예약해제
-				LOGD("Enter : 남문 -> 예약해제");
+					return true;
+				} else if (strstr(result, "취")) { // 예약해제
+					LOGD("Enter : 남문 -> 예약해제");
 
-				/* 최종 판단 코드 */
-				LOGD("SUCCESS : %s", _("IDS_CANCEL_BACKOPEN"));
-				vcp_cmd_cancel(BACK_DOOR);
-				return true;
-			} else { // 일반
-				LOGD("Enter : 남문 -> 일반");
+					/* 최종 판단 코드 */
+					LOGD("SUCCESS : %s", _("IDS_CANCEL_BACKOPEN"));
+					vcp_cmd_cancel(BACK_DOOR);
+					return true;
+				} else { // 일반
+					LOGD("Enter : 남문 -> 일반");
+					LOGD("String length : %s(%d)", result, strlen(result));
 
-				/* 최종 판단 코드 */
-				if (strstr(result, "열")) {
-					LOGD("Enter : 남문 -> 열어");
-					vcp_cmd_set(BACK_DOOR, 1); // 잠금 -> 열림
-				} else if (strstr(result, "잠")) {
-					LOGD("Enter : 남문 -> 잠궈");
-					vcp_cmd_set(BACK_DOOR, 0); // 열림 -> 잠금
-				} else {
-					if (current_information.back_door) {
-						LOGD("Enter : 남문 -> 잠궈?");
+					if (strlen(result) >= 15) {
+						vc_panel_vc_play_text("명령을 이해하지 못했습니다.");
+						return true;
+					}
+
+					/* 최종 판단 코드 */
+					if (strstr(result, "열")) {
+						LOGD("Enter : 남문 -> 열어");
+						vcp_cmd_set(BACK_DOOR, 1); // 잠금 -> 열림
+					} else if (strstr(result, "잠")) {
+						LOGD("Enter : 남문 -> 잠궈");
 						vcp_cmd_set(BACK_DOOR, 0); // 열림 -> 잠금
 					} else {
-						LOGD("Enter : 남문 -> 열어?");
-						vcp_cmd_set(BACK_DOOR, 1); // 잠금 -> 열림
+						vc_panel_vc_play_text("명령을 이해하지 못했습니다.");
 					}
+					return true;
 				}
-				return true;
+			} else if (0 == strstr(result, "일") - result) {
+				LOGD("Enter : 일번기기");
+
+				if (strstr(result, "뒤")) { // 예약
+					LOGD("Enter : 일번기기 -> 예약");
+
+					if (!strstr(result, "초")) {
+						vc_panel_vc_play_text("단위를 확인할 수가 없습니다.");
+						break;
+					}
+
+					double sec = 0.0f;
+					if (strstr(result, "오")) {
+						LOGD("Enter : 일번기기 -> 예약 -> 오초");
+						sec = 5.0f;
+					} else if (strstr(result, "십") || strstr(result, "시") || strstr(result, "식") || strstr(result, "수")) {
+						LOGD("Enter : 일번기기 -> 예약 -> 십초");
+						sec = 15.0f;
+					} else {
+						vc_panel_vc_play_text("이해할 수 없는 숫자입니다.");
+						break;
+					}
+
+					/* 최종 판단 코드 */
+					if (strstr(result, "동")) {
+						LOGD("Enter : 일번기기 -> 예약 -> 동작");
+						vcp_cmd_reserve(SWITCH_A, 1, sec); // 중지 -> 동작
+					} else if (strstr(result, "중")) {
+						LOGD("Enter : 일번기기 -> 예약 -> 중지");
+						vcp_cmd_reserve(SWITCH_A, 0, sec); // 동작 -> 중지
+					} else {
+						vc_panel_vc_play_text("명령을 이해하지 못했습니다.");
+					}
+					return true;
+				} else if (strstr(result, "취")) { // 예약해제
+					LOGD("Enter : 일번기기 -> 예약해제");
+
+					/* 최종 판단 코드 */
+					LOGD("SUCCESS : %s", _("IDS_CANCEL_A_ON"));
+					vcp_cmd_cancel(SWITCH_A);
+					return true;
+				} else { // 일반
+					LOGD("Enter : 일번기기 -> 일반");
+					LOGD("String length : %s(%d)", result, strlen(result));
+
+					if (strlen(result) >= 22) {
+						vc_panel_vc_play_text("명령을 이해하지 못했습니다.");
+						return true;
+					}
+
+					/* 최종 판단 코드 */
+					if (strstr(result, "동")) {
+						LOGD("Enter : 일번기기 -> 동작");
+						vcp_cmd_set(SWITCH_A, 1); // 중지 -> 동작
+					} else if (strstr(result, "중")) {
+						LOGD("Enter : 일번기기 -> 중지");
+						vcp_cmd_set(SWITCH_A, 0); // 동작 -> 중지
+					} else {
+						vc_panel_vc_play_text("명령을 이해하지 못했습니다.");
+					}
+					return true;
+				}
+			} else if (0 == strstr(result, "이") - result) {
+				LOGD("Enter : 이번기기");
+
+				if (strstr(result, "뒤")) { // 예약
+					LOGD("Enter : 이번기기 -> 예약");
+
+					if (!strstr(result, "초")) {
+						vc_panel_vc_play_text("단위를 확인할 수가 없습니다.");
+						break;
+					}
+
+					double sec = 0.0f;
+					if (strstr(result, "오")) {
+						LOGD("Enter : 이번기기 -> 예약 -> 오초");
+						sec = 5.0f;
+					} else if (strstr(result, "십") || strstr(result, "시") || strstr(result, "식") || strstr(result, "수")) {
+						LOGD("Enter : 이번기기 -> 예약 -> 십초");
+						sec = 15.0f;
+					} else {
+						vc_panel_vc_play_text("이해할 수 없는 숫자입니다.");
+						break;
+					}
+
+					/* 최종 판단 코드 */
+					if (strstr(result, "동")) {
+						LOGD("Enter : 이번기기 -> 예약 -> 동작");
+						vcp_cmd_reserve(SWITCH_B, 1, sec); // 중지 -> 동작
+					} else if (strstr(result, "중")) {
+						LOGD("Enter : 이번기기 -> 예약 -> 중지");
+						vcp_cmd_reserve(SWITCH_B, 0, sec); // 동작 -> 중지
+					} else {
+						vc_panel_vc_play_text("명령을 이해하지 못했습니다.");
+					}
+					return true;
+				} else if (strstr(result, "취")) { // 예약해제
+					LOGD("Enter : 이번기기 -> 예약해제");
+
+					/* 최종 판단 코드 */
+					LOGD("SUCCESS : %s", _("IDS_CANCEL_B_ON"));
+					vcp_cmd_cancel(SWITCH_B);
+					return true;
+				} else { // 일반
+					LOGD("Enter : 이번기기 -> 일반");
+					LOGD("String length : %s(%d)", result, strlen(result));
+
+					if (strlen(result) >= 22) {
+						vc_panel_vc_play_text("명령을 이해하지 못했습니다.");
+						return true;
+					}
+
+					/* 최종 판단 코드 */
+					if (strstr(result, "동")) {
+						LOGD("Enter : 이번기기 -> 동작");
+						vcp_cmd_set(SWITCH_B, 1); // 중지 -> 동작
+					} else if (strstr(result, "중")) {
+						LOGD("Enter : 이번기기 -> 중지");
+						vcp_cmd_set(SWITCH_B, 0); // 동작 -> 중지
+					} else {
+						vc_panel_vc_play_text("명령을 이해하지 못했습니다.");
+					}
+					return true;
+				}
+			} else {
+				vc_panel_vc_play_text("다시 말씀해주세요.");
 			}
-		} else if (0 == strstr(result, "일") - result) {
-			LOGD("Enter : 일번기기");
-
-			if (strstr(result, "뒤")) { // 예약
-				LOGD("Enter : 일번기기 -> 예약");
-
-				double sec = 0.0f;
-				if (strstr(result, "오")) {
-					LOGD("Enter : 일번기기 -> 예약 -> 오초");
-					sec = 5.0f;
-				} else {
-					LOGD("Enter : 일번기기 -> 예약 -> 십초");
-					sec = 10.0f;
-				}
-
-				/* 최종 판단 코드 */
-				if (strstr(result, "시")) {
-					LOGD("Enter : 일번기기 -> 예약 -> 시작");
-					vcp_cmd_reserve(SWITCH_A, 1, sec); // 중지 -> 시작
-				} else if (strstr(result, "중")) {
-					LOGD("Enter : 일번기기 -> 예약 -> 중지");
-					vcp_cmd_reserve(SWITCH_A, 0, sec); // 시작 -> 중지
-				} else {
-					if (current_information.switch_a) {
-						LOGD("Enter : 일번기기 -> 예약 -> 잠궈?");
-						vcp_cmd_reserve(SWITCH_A, 0, sec); // 시작 -> 중지
-					} else {
-						LOGD("Enter : 일번기기 -> 예약 -> 열어?");
-						vcp_cmd_reserve(SWITCH_A, 1, sec); // 중지 -> 시작
-					}
-				}
-				return true;
-			} else if (strstr(result, "해")) { // 예약해제
-				LOGD("Enter : 일번기기 -> 예약해제");
-
-				/* 최종 판단 코드 */
-				LOGD("SUCCESS : %s", _("IDS_CANCEL_A_ON"));
-				vcp_cmd_cancel(SWITCH_A);
-				return true;
-			} else { // 일반
-				LOGD("Enter : 일번기기 -> 일반");
-
-				/* 최종 판단 코드 */
-				if (strstr(result, "시")) {
-					LOGD("Enter : 일번기기 -> 시작");
-					vcp_cmd_set(SWITCH_A, 1); // 중지 -> 시작
-				} else if (strstr(result, "중")) {
-					LOGD("Enter : 일번기기 -> 중지");
-					vcp_cmd_set(SWITCH_A, 0); // 시작 -> 중지
-				} else {
-					if (current_information.switch_a) {
-						LOGD("Enter : 일번기기 -> 중지?");
-						vcp_cmd_set(SWITCH_A, 0); // 시작 -> 중지
-					} else {
-						LOGD("Enter : 일번기기 -> 열어?");
-						vcp_cmd_set(SWITCH_A, 1); // 중지 -> 시작
-					}
-				}
-				return true;
-			}
-		} else if (0 == strstr(result, "이") - result) {
-			LOGD("Enter : 이번기기");
-
-			if (strstr(result, "뒤")) { // 예약
-				LOGD("Enter : 이번기기 -> 예약");
-
-				double sec = 0.0f;
-				if (strstr(result, "오")) {
-					LOGD("Enter : 이번기기 -> 예약 -> 오초");
-					sec = 5.0f;
-				} else {
-					LOGD("Enter : 이번기기 -> 예약 -> 십초");
-					sec = 10.0f;
-				}
-
-				/* 최종 판단 코드 */
-				if (strstr(result, "시")) {
-					LOGD("Enter : 이번기기 -> 예약 -> 시작");
-					vcp_cmd_reserve(SWITCH_B, 1, sec); // 중지 -> 시작
-				} else if (strstr(result, "중")) {
-					LOGD("Enter : 이번기기 -> 예약 -> 중지");
-					vcp_cmd_reserve(SWITCH_B, 0, sec); // 시작 -> 중지
-				} else {
-					if (current_information.switch_b) {
-						LOGD("Enter : 이번기기 -> 예약 -> 잠궈?");
-						vcp_cmd_reserve(SWITCH_B, 0, sec); // 시작 -> 중지
-					} else {
-						LOGD("Enter : 이번기기 -> 예약 -> 열어?");
-						vcp_cmd_reserve(SWITCH_B, 1, sec); // 중지 -> 시작
-					}
-				}
-				return true;
-			} else if (strstr(result, "해")) { // 예약해제
-				LOGD("Enter : 이번기기 -> 예약해제");
-
-				/* 최종 판단 코드 */
-				LOGD("SUCCESS : %s", _("IDS_CANCEL_B_ON"));
-				vcp_cmd_cancel(SWITCH_B);
-				return true;
-			} else { // 일반
-				LOGD("Enter : 이번기기 -> 일반");
-
-				/* 최종 판단 코드 */
-				if (strstr(result, "시")) {
-					LOGD("Enter : 이번기기 -> 시작");
-					vcp_cmd_set(SWITCH_B, 1); // 중지 -> 시작
-				} else if (strstr(result, "중")) {
-					LOGD("Enter : 이번기기 -> 중지");
-					vcp_cmd_set(SWITCH_B, 0); // 시작 -> 중지
-				} else {
-					if (current_information.switch_b) {
-						LOGD("Enter : 이번기기 -> 중지?");
-						vcp_cmd_set(SWITCH_B, 0); // 시작 -> 중지
-					} else {
-						LOGD("Enter : 이번기기 -> 열어?");
-						vcp_cmd_set(SWITCH_B, 1); // 중지 -> 시작
-					}
-				}
-				return true;
-			}
-		} else {
-			vc_panel_vc_play_text("다시 말씀해주세요.");
-		}
+		} while (0);
 #if 0
 		if (!strcasecmp(result, _("IDS_FRONTOPEN"))) {
 			LOGD("SUCCESS : %s", _("IDS_FRONTOPEN"));
